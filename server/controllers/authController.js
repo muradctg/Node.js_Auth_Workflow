@@ -22,6 +22,8 @@ const register = async (req, res) => {
   const verificationToken = crypto.randomBytes(40).toString('hex')
 
   const user = await User.create({ name, email, password, role, verificationToken, });
+
+  // Changed the local host from 3000 to 5000 to work with sendgrid on 24th May 2022, then again changed back to 3000 the same day
   const origin = 'http://localhost:3000'
 
   // const tempOrigin = req.get('origin')
@@ -168,6 +170,12 @@ const resetPassword = async(req,res) => {
 
   if(user) {
     const currentDate = new Date()
+
+    // Added this BadRequestError on my own on 25th May 2022
+    if(user.passwordToken !== createHash(token) || user.passwordTokenExpirationDate < currentDate) {
+      throw new CustomError.BadRequestError('Failed! This reset link has already been used or expired');
+
+    }
 
     if(user.passwordToken === createHash(token) && user.passwordTokenExpirationDate > currentDate) {
       user.password = password
